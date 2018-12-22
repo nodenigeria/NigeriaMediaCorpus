@@ -1,0 +1,18 @@
+*************************************
+NIGERIAN NEWS CORPUS DATASET SCHEMA
+*************************************
+
+The corresponding parsed files are tab-delimited, composed of 7 columns with the corresponding entries:
+
+DATETIME  |  TITLE  |  SECTION  |  AUTHOR  |  TEXT  |  SOURCE  |  URI
+EXAMPLE: 2013-05-03T00:12:00.00  |  Peeping into the realm of economic nationalism  |  My Layman's View  |  By Onochie Anibeze  |  “Hey! Fashola has been here," screamed Chibeze. "Yes"....."  | Vanguard  |  /Volumes/G-DRIVE/DataMining_Project/vangaurd/data/vanguardngr_columns_%e2%80%98fashola-has-been-here%e2%80%99.html
+
+DATETIME: The time the article was posted. Converted to LocalDateTime format. Include Year, Month, Day and Time
+TITLE: The title of the article
+SECTION: This is the section on the site the article was posted. Could either be a general section ("Politics, Metro, etc") or a column name. 
+AUTHOR: The author of the article
+TEXT: the body of the article
+SOURCE: The new site the article is pulled from
+URI: This is a unique identifier. It is also the filename for the article in the raw_data folder. This is the uniqueID that is used for the article (At least for the purposes of parsing). When the topic model is run, each URI is associate to a unique documentID. 
+
+
