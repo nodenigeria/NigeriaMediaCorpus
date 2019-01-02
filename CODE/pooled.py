@@ -63,6 +63,25 @@ class CommentDriver(webdriver.Chrome):
 		else:
 			super(CommentDriver, self).__init__(path)
 
+	'''
+	params: json object containing disqus thread data
+	Parses json and extracts essential information 
+	'''
+
+	def parse_comments(self, comment_data):
+		result = {}
+		posts = comment_data["response"]["posts"]
+
+		for post in posts:
+			result[post["id"]] = dict(createdAt=post["createdAt"], message=post["message"], author=post["author"]["name"], 
+				depth=post["depth"], points=post["points"])
+			if post["depth"] > 0:
+				result[post["id"]]["parent"] = post["parent"]
+			else:
+				result[post["id"]]["parent"] = post["id"]
+
+		return result
+
 	def config(self, url, disqus_div_id = None, data_script_id = None):
 		'''
 		params: url, disqus_div_id, data_script_id
@@ -74,7 +93,7 @@ class CommentDriver(webdriver.Chrome):
 		self.disqus_div_id = disqus_div_id
 		self.data_script_id = data_script_id
 
-		
+
 	def run(self):
 		'''
 		params: None
@@ -116,7 +135,7 @@ class CommentDriver(webdriver.Chrome):
 
 			jObject = json.loads(forum.get_attribute('innerHTML'))
 			self.close()
-			return (self.url, jObject)
+			return (self.url, self.parse_comments(jObject))
 		except:
 			print("This is the problem child: {}\nERROR:{}".format(self.url, sys.exc_info()[0]))
 			print("Exception in user code:")
@@ -157,7 +176,7 @@ class PoolManager(object):
 		"file:///Volumes/G-DRIVE/DataMining_Project/Data/rawdata/vangaurd/data/vanguardngr_editorial_gov-el-rufais-feud-with-beggars.html",
 		"file:///Volumes/G-DRIVE/DataMining_Project/Data/rawdata/vangaurd/data/vanguardngr_editorial_herdsmen-attacks-trigger-famine.html"]
 		'''
-		self.urls = glob.glob(path+"/*."+"html")[:10]
+		self.urls = glob.glob(path+"/*.html")
 		#self.logger.setLevel(logging.INFO)
 
 	def driver_config(self, path=None, args=None, disqus_div_id=None, data_script_id=None):
@@ -169,7 +188,7 @@ class PoolManager(object):
 		self.path = path #"/usr/local/bin/chromedriver"
 		self.args = ["disable-default-apps","disable-gpu","disable-extensions","no-default-browser-check", "headless", "no-sandbox", "disable-dev-shm-usage"]
 		self.disqus_div_id = "disqus_thread" #disqus_div_id
-		self.data_script_id =  "disqus-forumData" #data_script_id
+		self.data_script_id =  "disqus-threadData" #data_script_id
 		print("\n*****\tDRIVER CONFIGURATIONS\t****")
 		print("PATH_TO_DRIVER \t\t\t===> {}".format(self.path))
 		print("--headless\t\t\t==> true")
@@ -234,7 +253,7 @@ if __name__ == "__main__":
 
 	(1) <file_directory_path>:
 		- Do not include the final backslash when pasting
-		- Past the directory path in quotes
+		- Pass the directory path in quotes
 		Exmp: python pooled.py "/Volumes/G-DRIVE/DataMining_Project/Data/vanguard"
 
 	(2) <file_path_to_save_results>:
@@ -249,12 +268,12 @@ if __name__ == "__main__":
 	logger = Logger()
 
 	#Passed in arguments for the directory path and the path to save the results
-	filename = sys.argv[2]
-	directory = sys.argv[1]
+	file_to_save = sys.argv[2]
+	articles_directory = sys.argv[1]
 	chrome_path = sys.argv[3]
 
 	# Initialize the PoolManager()
-	pm = PoolManager(logger, directory)
+	pm = PoolManager(logger, articles_directory)
 
 	# Set the configuration parameters
 	pm.driver_config(path=chrome_path)
@@ -263,5 +282,5 @@ if __name__ == "__main__":
 	results = pm.run()
 
 	#Save to disk
-	pm.save_to_disk(filename, results)
+	pm.save_to_disk(file_to_save, results)
 
