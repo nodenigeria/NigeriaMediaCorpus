@@ -24,7 +24,7 @@ if __name__ == "__main__":
 		tsv_reader = csv.reader(f, delimiter="\t")
 		for article in tsv_reader:
 			result[article[6]] = dict(datetime=article[0], section=article[1], title=article[2], 
-				author=article[3][3:], text=article[4], source=article[5])
+				author=article[3], text=article[4], source=article[5])
 
 	with open(path_to_save, "w") as f:
 		encodingString = json.dumps(result, indent=4)
