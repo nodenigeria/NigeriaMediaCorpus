@@ -234,7 +234,7 @@ class PoolManager(object):
 		print("PID {} ~ SAVING TO DISK".format(os.getpid()))
 
 		for comment_data in list_of_tups:
-			self.result[comment_data[0]]["comments"] = list_of_tups[1]
+			self.result[comment_data[0]]["comments"] = comment_data[1]
 
 		with open(filename, "w") as f:
 			encodingString = json.dumps(self.result, indent=4)
