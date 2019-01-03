@@ -5,6 +5,7 @@ from multiprocessing import Pool, TimeoutError
 from selenium.webdriver.chrome.options import Options
 import time
 import os
+import csv
 import glob
 import sys, traceback
 import json
@@ -69,18 +70,18 @@ class CommentDriver(webdriver.Chrome):
 	'''
 
 	def parse_comments(self, comment_data):
-		result = {}
+		comment_result = {}
 		posts = comment_data["response"]["posts"]
 
 		for post in posts:
-			result[post["id"]] = dict(createdAt=post["createdAt"], message=post["message"], author=post["author"]["name"], 
+			comment_result[post["id"]] = dict(createdAt=post["createdAt"], message=post["message"], author=post["author"]["name"], 
 				depth=post["depth"], points=post["points"])
 			if post["depth"] > 0:
-				result[post["id"]]["parent"] = post["parent"]
+				comment_result[post["id"]]["parent"] = post["parent"]
 			else:
-				result[post["id"]]["parent"] = post["id"]
+				comment_result[post["id"]]["parent"] = post["id"]
 
-		return result
+		return comment_result
 
 	def config(self, url, disqus_div_id = None, data_script_id = None):
 		'''
@@ -176,7 +177,18 @@ class PoolManager(object):
 		"file:///Volumes/G-DRIVE/DataMining_Project/Data/rawdata/vangaurd/data/vanguardngr_editorial_gov-el-rufais-feud-with-beggars.html",
 		"file:///Volumes/G-DRIVE/DataMining_Project/Data/rawdata/vangaurd/data/vanguardngr_editorial_herdsmen-attacks-trigger-famine.html"]
 		'''
-		self.urls = glob.glob(path+"/*.html")
+		self.result = {}
+		self.urls = []
+
+		with open(path) as f:
+			tsv_reader = csv.reader(f, delimiter="\t")
+			next(tsv_reader)
+			for article in tsv_reader:
+				self.result[article[6]] = dict(datetime=article[0], section=article[1], title=article[2], 
+					author=article[3], text=article[4], source=article[5])
+				self.urls.append(article[6])
+			print(self.urls)
+
 		#self.logger.setLevel(logging.INFO)
 
 	def driver_config(self, path=None, args=None, disqus_div_id=None, data_script_id=None):
@@ -221,10 +233,12 @@ class PoolManager(object):
 
 		"""
 		print("PID {} ~ SAVING TO DISK".format(os.getpid()))
+
+		for comment_data in list_of_tups:
+			self.result[comment_data[0]]["comments"] = list_of_tups[1]
+
 		with open(filename, "w") as f:
-			print(list_of_tups)
-			encodingString = json.dumps(dict(list_of_tups), indent=4)
-			print(dict(list_of_tups))
+			encodingString = json.dumps(self.result, indent=4)
 			f.write(encodingString)
 
 	def run(self):
@@ -251,9 +265,8 @@ if __name__ == "__main__":
 
 	python pooled.py <file_directory_path> <file_path_to_save_results> <path_to_chrome_driver>
 
-	(1) <file_directory_path>:
-		- Do not include the final backslash when pasting
-		- Pass the directory path in quotes
+	(1) <article_path>:
+		- Pass the file path in quotes
 		Exmp: python pooled.py "/Volumes/G-DRIVE/DataMining_Project/Data/vanguard"
 
 	(2) <file_path_to_save_results>:
@@ -269,11 +282,11 @@ if __name__ == "__main__":
 
 	#Passed in arguments for the directory path and the path to save the results
 	file_to_save = sys.argv[2]
-	articles_directory = sys.argv[1]
+	articles_file = sys.argv[1]
 	chrome_path = sys.argv[3]
 
 	# Initialize the PoolManager()
-	pm = PoolManager(logger, articles_directory)
+	pm = PoolManager(logger, articles_file)
 
 	# Set the configuration parameters
 	pm.driver_config(path=chrome_path)
