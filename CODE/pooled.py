@@ -187,7 +187,6 @@ class PoolManager(object):
 				self.result[article[6]] = dict(datetime=article[0], section=article[1], title=article[2], 
 					author=article[3], text=article[4], source=article[5])
 				self.urls.append(article[6])
-			print(self.urls)
 
 		#self.logger.setLevel(logging.INFO)
 
