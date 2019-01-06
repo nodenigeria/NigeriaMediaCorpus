@@ -80,7 +80,6 @@ class CommentDriver(webdriver.Chrome):
 				comment_result[post["id"]]["parent"] = post["parent"]
 			else:
 				comment_result[post["id"]]["parent"] = post["id"]
-
 		return comment_result
 
 	def config(self, url, disqus_div_id = None, data_script_id = None):
@@ -93,6 +92,7 @@ class CommentDriver(webdriver.Chrome):
 		self.url = self.url.replace("%", "%25")
 		self.disqus_div_id = disqus_div_id
 		self.data_script_id = data_script_id
+		print(url)
 
 
 	def run(self):
@@ -168,7 +168,7 @@ class PoolManager(object):
 	See Docstrings
 	'''
 
-	def __init__(self, logger,path=None,):
+	def __init__(self, logger,path=None, article_directory_path=None):
 		#self.logger = logger.myLogger()
 		''''self.urls = ["file:///Volumes/G-DRIVE/DataMining_Project/Data/rawdata/vangaurd/data/vanguardngr_editorial_electronic-voting-possible-if.html",
 		"file:///Volumes/G-DRIVE/DataMining_Project/Data/rawdata/vangaurd/data/vanguardngr_editorial_elevating-electricity-statistics.html",
@@ -186,7 +186,7 @@ class PoolManager(object):
 			for article in tsv_reader:
 				self.result[article[6]] = dict(datetime=article[0], section=article[1], title=article[2], 
 					author=article[3], text=article[4], source=article[5])
-				self.urls.append(article[6])
+				self.urls.append(article_directory_path + article[6])
 
 		#self.logger.setLevel(logging.INFO)
 
@@ -234,7 +234,10 @@ class PoolManager(object):
 		print("PID {} ~ SAVING TO DISK".format(os.getpid()))
 
 		for comment_data in list_of_tups:
-			self.result[comment_data[0]]["comments"] = comment_data[1]
+			try:
+				self.result[os.path.basename(comment_data[0])]["comments"] = comment_data[1]
+			except:
+				print("No data for file")
 
 		with open(filename, "w") as f:
 			encodingString = json.dumps(self.result, indent=4)
@@ -252,7 +255,7 @@ class PoolManager(object):
 			print("\n\n***STARTING POOLED SCRAPER***")
 			print("(1) Number of processes: {}".format(pool._processes))
 			print("(2) CPU Count: {}\n".format(multiprocessing.cpu_count()))
-			comments = pool.map(self.get, self.urls[:10])
+			comments = pool.map(self.get, self.urls)
 		return comments
 
 
@@ -264,15 +267,18 @@ if __name__ == "__main__":
 
 	python pooled.py <file_directory_path> <file_path_to_save_results> <path_to_chrome_driver>
 
-	(1) <article_path>:
+	(1) <article_data path>:
 		- Pass the file path in quotes
 		Exmp: python pooled.py "/Volumes/G-DRIVE/DataMining_Project/Data/vanguard"
 
-	(2) <file_path_to_save_results>:
+	(2)<articles directory>
+		- Pass the directory containing the articles in quotes
+
+	(3) <file_path_to_save_results>:
 		- absolute path to save the results. Also in quotes:
 		Exmp: python pooled.py "/Volumes/G-DRIVE/DataMining_Project/Data/vanguard" "/Volumes/G-DRIVE/DataMining_Project/Data/vanguard_comments"
 
-	(3) <path_to_chrome_driver>:
+	(4) <path_to_chrome_driver>:
 		- Absolute path to your chrome_driver install. Also in quotes:
 		Exmp: python pooled.py "/Volumes/G-DRIVE/DataMining_Project/Data/vanguard" "/Volumes/G-DRIVE/DataMining_Project/Data/vanguard_comments" "/Volumes/G-DRIVE/chromedriver"
 		
@@ -280,12 +286,13 @@ if __name__ == "__main__":
 	logger = Logger()
 
 	#Passed in arguments for the directory path and the path to save the results
-	file_to_save = sys.argv[2]
+	file_to_save = sys.argv[3]
+	articles_directory = sys.argv[2]
 	articles_file = sys.argv[1]
-	chrome_path = sys.argv[3]
+	chrome_path = sys.argv[4]
 
 	# Initialize the PoolManager()
-	pm = PoolManager(logger, articles_file)
+	pm = PoolManager(logger, articles_file, articles_directory)
 
 	# Set the configuration parameters
 	pm.driver_config(path=chrome_path)
