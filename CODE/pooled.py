@@ -185,7 +185,7 @@ class PoolManager(object):
 			next(tsv_reader)
 			for article in tsv_reader:
 				self.result[article[6]] = dict(datetime=article[0], section=article[1], title=article[2], 
-					author=article[3], text=article[4], source=article[5])
+					author=article[3], text=article[4].replace('By ', '').replace(article[3], ''), source=article[5])
 				self.urls.append(article_directory_path + article[6])
 
 		#self.logger.setLevel(logging.INFO)
@@ -255,7 +255,7 @@ class PoolManager(object):
 			print("\n\n***STARTING POOLED SCRAPER***")
 			print("(1) Number of processes: {}".format(pool._processes))
 			print("(2) CPU Count: {}\n".format(multiprocessing.cpu_count()))
-			comments = pool.map(self.get, self.urls)
+			comments = pool.map(self.get, self.urls[:10])
 		return comments
 
 
