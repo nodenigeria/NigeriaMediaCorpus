@@ -16,16 +16,14 @@ if __name__ == "__main__":
 	article_data = sys.argv[1]
 	path_to_save = sys.argv[2]
 
-	result = {}
+	result = ''
 
 	# creates object for each article indexed by URI
 
 	with open(article_data) as f:
 		tsv_reader = csv.reader(f, delimiter="\t")
 		for article in tsv_reader:
-			result[article[6]] = dict(datetime=article[0], section=article[1], title=article[2], 
-				author=article[3], text=article[4], source=article[5])
+			result += article[4]
 
 	with open(path_to_save, "w") as f:
-		encodingString = json.dumps(result, indent=4)
-		f.write(encodingString)
+		f.write(result)
