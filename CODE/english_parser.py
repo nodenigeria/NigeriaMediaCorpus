@@ -4,7 +4,7 @@ import json
 import sys
 import csv
 
-'''
+''' 
 run with 2 arguments:
 (1) path to article data
 (2) path to save JSON result
