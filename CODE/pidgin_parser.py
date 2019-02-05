@@ -3,7 +3,6 @@ import glob
 import json
 import sys
 import csv
-from nltk import tokenize
 from bs4 import BeautifulSoup
 
 '''
@@ -38,4 +37,4 @@ if __name__ == "__main__":
 		result += parse_article(url)
 
 	with open(path_to_save, "w") as f:
-		f.write(result)
+		f.write(result.encode('utf-8'))

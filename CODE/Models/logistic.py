@@ -43,11 +43,15 @@ if __name__ == "__main__":
 		pidgin_str = f.readline()
 
 	with open(english_data) as f:
-		english_str = f.readline()
+		english_str = f.readline().decode('utf-8')
 
-	pidgin_sentences = sent_tokenize(pidgin_str)
-	english_sentences = sent_tokenize(english_str)[:len(pidgin_sentences)]
 
+	# tokenize each of the texts into sentences
+	pidgin_sentences = sent_tokenize(pidgin_str.replace('.', '. '))
+	english_sentences = sent_tokenize(english_str.replace('.', '. '))[:3*len(pidgin_sentences)]
+
+
+	# remove all non-alphabetic characters and lowercase eech sentence
 	pidgin_sentences = [re.sub('[^A-Za-z]+', ' ', sentence.lower()) for sentence in pidgin_sentences]
 	english_sentences = [re.sub('[^A-Za-z]+', ' ', sentence.lower()) for sentence in english_sentences]
 
@@ -64,17 +68,19 @@ if __name__ == "__main__":
 		training_targets.append(1)
 
 
+	# Create train/test splits
 	X_train, X_test, y_train, y_test = train_test_split(training_data,
                                                                      training_targets,
                                                                      test_size=0.2,
                                                                      random_state=0)
 
+	'''
 	bigram_pipe = Pipeline([('vect', CountVectorizer(ngram_range=(2,2), analyzer='word')), 
 		('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
 
 	bigram_model = bigram_pipe.fit(X_train, y_train)
 
-	sixgram_pipe = Pipeline([('vect', CountVectorizer(ngram_range=(6,6), analyzer='char')), 
+	sixgram_pipe = Pipeline([('vect', CountVectorizer(ngram_range=(1,1), analyzer='char')), 
 		('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
 
 	sixgram_model = sixgram_pipe.fit(X_train, y_train)
@@ -84,6 +90,22 @@ if __name__ == "__main__":
 
 	print(accuracy_score(y_test, y_predicted_bigram))
 	print(accuracy_score(y_test, y_predicted_sixgram))
+	'''
 	
 
+	# create classifier for each word n-gram for n in range [1, 4)
+	for i in range(1, 4):
+		pipe = Pipeline([('vect', CountVectorizer(ngram_range=(i, i), analyzer='word')),
+			('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
+		model = pipe.fit(X_train, y_train)
+		y_predicted = model.predict(X_test)
+		print("{} word gram accuracy: {}".format(i, accuracy_score(y_test, y_predicted)))
+		print(classification_report(y_test, y_predicted, target_names=labels))
 
+	# create classifier for each character n-gram for n in range [3, 7)
+	for i in range(3, 7):
+		pipe = Pipeline([('vect', CountVectorizer(ngram_range=(i,i), analyzer='char')),
+			('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
+		model = pipe.fit(X_train, y_train)
+		y_predicted = model.predict(X_test)
+		print("{} char gram accuracy: {}".format(i, accuracy_score(y_test, y_predicted)))
