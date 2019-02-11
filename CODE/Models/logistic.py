@@ -16,6 +16,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import roc_auc_score
 
 import numpy as np
 import scipy
@@ -40,7 +41,7 @@ if __name__ == "__main__":
 	labels = ['pi', 'en']
 
 	with open(pidgin_data) as f:
-		pidgin_str = f.readline()
+		pidgin_str = f.read().replace('\n', '').decode('utf-8')
 
 	with open(english_data) as f:
 		english_str = f.readline().decode('utf-8')
@@ -48,7 +49,8 @@ if __name__ == "__main__":
 
 	# tokenize each of the texts into sentences
 	pidgin_sentences = sent_tokenize(pidgin_str.replace('.', '. '))
-	english_sentences = sent_tokenize(english_str.replace('.', '. '))[:3*len(pidgin_sentences)]
+	english_sentences = sent_tokenize(english_str.replace('.', '. '))
+
 
 
 	# remove all non-alphabetic characters and lowercase eech sentence
@@ -66,7 +68,6 @@ if __name__ == "__main__":
 	for sentence in english_sentences:
 		training_data.append(sentence)
 		training_targets.append(1)
-
 
 	# Create train/test splits
 	X_train, X_test, y_train, y_test = train_test_split(training_data,
@@ -99,8 +100,7 @@ if __name__ == "__main__":
 			('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
 		model = pipe.fit(X_train, y_train)
 		y_predicted = model.predict(X_test)
-		print("{} word gram accuracy: {}".format(i, accuracy_score(y_test, y_predicted)))
-		print(classification_report(y_test, y_predicted, target_names=labels))
+		print("{} word gram auroc: {}".format(i, roc_auc_score(y_test, y_predicted)))
 
 	# create classifier for each character n-gram for n in range [3, 7)
 	for i in range(3, 7):
@@ -108,4 +108,4 @@ if __name__ == "__main__":
 			('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
 		model = pipe.fit(X_train, y_train)
 		y_predicted = model.predict(X_test)
-		print("{} char gram accuracy: {}".format(i, accuracy_score(y_test, y_predicted)))
+		print("{} char gram auroc: {}".format(i, roc_auc_score(y_test, y_predicted)))

@@ -22,7 +22,6 @@ def parse_article(url):
 
 	return result.replace('Share ', '').replace('withFacebookMessengerMessengerWhatsAppTwitterEmailCopy', '').replace('dis', '').replace('link', '')
 
-
 if __name__ == "__main__":
 	article_directory = sys.argv[1]
 	path_to_save = sys.argv[2]
@@ -33,8 +32,11 @@ if __name__ == "__main__":
 
 	urls = glob.glob(path)
 
+	i = 0
 	for url in urls:
 		result += parse_article(url)
+		i += 1
+		print("{} articles processed".format(i))
 
 	with open(path_to_save, "w") as f:
 		f.write(result.encode('utf-8'))
