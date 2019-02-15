@@ -74,24 +74,6 @@ if __name__ == "__main__":
                                                                      training_targets,
                                                                      test_size=0.2,
                                                                      random_state=0)
-
-	'''
-	bigram_pipe = Pipeline([('vect', CountVectorizer(ngram_range=(2,2), analyzer='word')), 
-		('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
-
-	bigram_model = bigram_pipe.fit(X_train, y_train)
-
-	sixgram_pipe = Pipeline([('vect', CountVectorizer(ngram_range=(1,1), analyzer='char')), 
-		('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
-
-	sixgram_model = sixgram_pipe.fit(X_train, y_train)
-
-	y_predicted_bigram = bigram_model.predict(X_test)
-	y_predicted_sixgram = sixgram_model.predict(X_test)
-
-	print(accuracy_score(y_test, y_predicted_bigram))
-	print(accuracy_score(y_test, y_predicted_sixgram))
-	'''
 	
 
 	# create classifier for each word n-gram for n in range [1, 4)
@@ -99,7 +81,7 @@ if __name__ == "__main__":
 		pipe = Pipeline([('vect', CountVectorizer(ngram_range=(i, i), analyzer='word')),
 			('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
 		model = pipe.fit(X_train, y_train)
-		y_predicted = model.predict(X_test)
+		y_predicted = model.decision_function(X_test)
 		print("{} word gram auroc: {}".format(i, roc_auc_score(y_test, y_predicted)))
 
 	# create classifier for each character n-gram for n in range [3, 7)
@@ -107,5 +89,5 @@ if __name__ == "__main__":
 		pipe = Pipeline([('vect', CountVectorizer(ngram_range=(i,i), analyzer='char')),
 			('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
 		model = pipe.fit(X_train, y_train)
-		y_predicted = model.predict(X_test)
+		y_predicted = model.decision_function(X_test)
 		print("{} char gram auroc: {}".format(i, roc_auc_score(y_test, y_predicted)))
