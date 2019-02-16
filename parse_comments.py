@@ -8,22 +8,22 @@ import json
 import logging
 
 def parse_comments(comment_data):
-		comment_result = {}
-		posts = comment_data["underlying"]["response"]["posts"]
+	comment_result = {}
+	posts = comment_data["underlying"]["response"]["posts"]
 
-		if not posts["value"]:
-			return {}
+	if not posts["value"]:
+		return {}
 
-		for post in posts["value"]:
-			comment_result[post["underlying"]["id"]["value"]] = dict(createdAt=post["underlying"]["createdAt"]["value"], 
-				message=post["underlying"]["message"], author=post["underlying"]["author"]["name"], 
-				depth=post["underlying"]["depth"]["value"], points=post["underlying"]["points"]["value"], 
-				profile=post["underlying"]["author"]["underlying"]["profileUrl"]["value"])
+	for post in posts["value"]:
+		comment_result[post["underlying"]["id"]["value"]] = dict(createdAt=post["underlying"]["createdAt"]["value"], 
+			message=post["underlying"]["message"], author=post["underlying"]["author"]["name"], 
+			depth=post["underlying"]["depth"]["value"], points=post["underlying"]["points"]["value"], 
+			profile=post["underlying"]["author"]["underlying"]["profileUrl"]["value"])
 
-			if post["underlying"]["depth"]["value"] > 0:
-				comment_result[post["underlying"]["id"]["value"]]["parent"] = post["underlying"]["parent"]["value"]
-			else:
-				comment_result[post["underlying"]["id"]["value"]]["parent"] = post["underlying"]["id"]["value"]
+		if post["underlying"]["depth"]["value"] > 0:
+			comment_result[post["underlying"]["id"]["value"]]["parent"] = post["underlying"]["parent"]["value"]
+		else:
+			comment_result[post["underlying"]["id"]["value"]]["parent"] = post["underlying"]["id"]["value"]
 	return comment_result
 
 
