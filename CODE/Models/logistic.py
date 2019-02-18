@@ -24,6 +24,7 @@ import scipy
 from nltk.tokenize import sent_tokenize
 
 import pandas as pd
+import pickle
 
 '''
 run with 2 arguments:
@@ -41,10 +42,10 @@ if __name__ == "__main__":
 	labels = ['pi', 'en']
 
 	with open(pidgin_data) as f:
-		pidgin_str = f.read().replace('\n', '').decode('utf-8')
+		pidgin_str = f.read().replace('\n', '')
 
 	with open(english_data) as f:
-		english_str = f.readline().decode('utf-8')
+		english_str = f.readline()
 
 
 	# tokenize each of the texts into sentences
@@ -76,6 +77,7 @@ if __name__ == "__main__":
                                                                      random_state=0)
 	
 
+	'''
 	# create classifier for each word n-gram for n in range [1, 4)
 	for i in range(1, 4):
 		pipe = Pipeline([('vect', CountVectorizer(ngram_range=(i, i), analyzer='word')),
@@ -91,3 +93,11 @@ if __name__ == "__main__":
 		model = pipe.fit(X_train, y_train)
 		y_predicted = model.decision_function(X_test)
 		print("{} char gram auroc: {}".format(i, roc_auc_score(y_test, y_predicted)))
+
+	'''
+	pipe = Pipeline([('vect', CountVectorizer(ngram_range=(4,4), analyzer='char')),
+			('tfidf', TfidfTransformer(use_idf=False)), ('lrg', LogisticRegression(solver='lbfgs'))])
+	model = pipe.fit(X_train, y_train)
+
+	with open('logistic_model.pkl', 'wb') as f:
+		pickle.dump(model, f)
