@@ -15,6 +15,7 @@ from nltk.tokenize import sent_tokenize
 
 import pandas as pd
 import pickle
+import json
 
 '''
 run with 1 argument:
@@ -25,25 +26,19 @@ if __name__ == "__main__":
 
 	comments_directory = sys.argv[1]
 
-
-
-	# remove all non-alphabetic characters and lowercase eech sentence
-	pidgin_sentences = [re.sub('[^A-Za-z]+', ' ', sentence.lower()) for sentence in pidgin_sentences]
-	english_sentences = [re.sub('[^A-Za-z]+', ' ', sentence.lower()) for sentence in english_sentences]
-
-
 	test_data = []
 
-	for file in glob.glob(directory+"*.json"):
+	for file in glob.glob(comments_directory+"*.json"):
 		with open(file, 'r') as f:
-			comment_data = json.loads(file)
-			for uri, comments in comment_data:
+			comment_data = json.load(f)
+			for uri, comments in comment_data.items():
 				if comments:
-					comment_string = comments["message"]["value"]
-					comment_sentences = sent_tokenize(comment_str.replace('.', '. '))
-					comment_sentences = [re.sub('[^A-Za-z]+', ' ', sentence.lower()) for sentence in comment_sentences]
-					for sentence in comment_sentences:
-						test_data.append(sentence)
+					for post_id, values in comments.items():
+						comment_string = values["message"]["value"]
+						comment_sentences = sent_tokenize(comment_string.replace('.', '. '))
+						comment_sentences = [re.sub('[^A-Za-z]+', ' ', sentence.lower()) for sentence in comment_sentences]
+						for sentence in comment_sentences:
+							test_data.append(sentence)
 
 	with open('logistic_model.pkl', 'rb') as f:
 		model = pickle.load(f)
@@ -52,11 +47,12 @@ if __name__ == "__main__":
 
 	sorted_predictions = sorted(enumerate(y_predicted), key = lambda x: x[1])
 
-	lowest_prediced = sorted_predictions[0:100]
+	lowest_predicted = sorted_predictions[0:100]
 	highest_predicted = sorted_predictions[-100:]
 
-	for sentence in lowest_prediced:
-		print(sentence)
+	with open('sorted_results.txt', 'w+') as f:
+		for sentence in lowest_predicted:
+			f.write((test_data[sentence[0]]))
 
-	for sentence in highest_predicted:
-		print(sentence)
+		for sentence in highest_predicted:
+			f.write((test_data[sentence[0]]))
