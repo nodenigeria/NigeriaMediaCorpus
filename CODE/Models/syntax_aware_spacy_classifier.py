@@ -31,8 +31,11 @@ import pickle
 from sklearn.pipeline import Pipeline, FeatureUnion
 from scipy.sparse import csr_matrix
 
-import stanfordnlp
+#import stanfordnlp
 from collections import Counter
+import spacy
+
+from sklearn.svm import SVC
 
 class SampleExtractor(BaseEstimator, TransformerMixin):
 
@@ -72,7 +75,7 @@ class SyntaxFeatureExtractor(BaseEstimator, TransformerMixin):
     """Takes in dataframe, extracts road name column, outputs average word length"""
 
     def __init__(self):
-        self.nlp = stanfordnlp.Pipeline()
+        self.nlp = spacy.load('en')
         self.pos_to_index = {}
         self.dep_to_index = {}
 
@@ -94,12 +97,14 @@ class SyntaxFeatureExtractor(BaseEstimator, TransformerMixin):
             pos_counts = Counter()
             dep_counts = Counter()
             
-            for sent in doc.sentences:
-                for w in sent.words:
-                    pos = w.pos
-                    pos_counts[w.pos] += 1
-                for d in sent.dependencies:
-                    dep = d[1]
+            for sent in doc.sents:
+                tokens, pos_tags, dep_parse_triples \
+                    = self.to_parsed_representations(sent)
+                
+                for pos in pos_tags:
+                    pos_counts[pos] += 1
+                for triple in dep_parse_triples:
+                    dep = triple[1]
                     dep_counts[dep] += 1
                     
             for pos, count in pos_counts.items():
@@ -143,6 +148,57 @@ class SyntaxFeatureExtractor(BaseEstimator, TransformerMixin):
 
         return output
 
+    def to_parsed_representations(self, spacy_sent):
+        def get_triples(n, triples):
+            n_tag = n.tag_
+            if len(n_tag) == 0:
+                n_tag = ' '
+            elif n_tag == 'BES':
+                n_tag = 'VBE'
+            elif n_tag == 'HVS':
+                n_tag == 'VHV'
+            elif n_tag == 'NFP':
+                n_tag == 'Punct'
+                
+            for c in n.children:
+                c_tag = c.tag_
+                if len(c_tag) == 0:
+                    c_tag = ' '
+                elif c_tag == 'BES':
+                    c_tag = 'VBE'
+                elif c_tag == 'HVS':
+                    c_tag == 'VHV'
+                elif c_tag == 'NFP':
+                    c_tag == 'Punct'
+                
+                t = ((n.orth_, n_tag), c.dep_, (c.orth_, c_tag))
+                if len(c.dep_) > 0:
+                    triples.append(t)
+                get_triples(c, triples)
+                
+        triples = []
+        get_triples(spacy_sent.root, triples)
+    
+        tokens = []
+        pos_tags = []
+        for t in spacy_sent:
+            if t.orth_ == ' ':
+                continue
+            tokens.append(t.orth_)
+            t_tag = t.tag_
+            if len(t_tag) == 0:
+                t_tag = ' '
+            elif t_tag == 'BES':
+                t_tag = 'VBE'
+            elif t_tag == 'HVS':
+                t_tag == 'VHV'
+            elif t_tag == 'NFP':
+                t_tag == 'Punct'
+            
+            pos_tags.append(t_tag)
+        return tokens, pos_tags, triples
+        
+        
     def transform(self, X, y=None):
         print('SFE transform called')
         #X_ = []
@@ -154,12 +210,14 @@ class SyntaxFeatureExtractor(BaseEstimator, TransformerMixin):
             pos_counts = Counter()
             dep_counts = Counter()
             
-            for sent in doc.sentences:
-                for w in sent.words:
-                    pos = w.pos
-                    pos_counts[w.pos] += 1
-                for d in sent.dependencies:
-                    dep = d[1]
+            for sent in doc.sents:
+                tokens, pos_tags, dep_parse_triples \
+                    = self.to_parsed_representations(sent)
+                
+                for pos in pos_tags:
+                    pos_counts[pos] += 1
+                for triple in dep_parse_triples:
+                    dep = triple[1]
                     dep_counts[dep] += 1
 
             for pos, count in pos_counts.items():
@@ -241,7 +299,7 @@ def main():
     
     labels = ['pi', 'en']
 
-    max_lines = 10000
+    max_lines = 100000
     pidgin_lines = []
     with open(pidgin_data) as f:
         for line_no, line in enumerate(f):
@@ -270,7 +328,7 @@ def main():
     training_data = []
     training_targets = []
 
-    n = min(10000, min(len(pidgin_sentences), len(english_sentences)))
+    n = min(100000, min(len(pidgin_sentences), len(english_sentences)))
     print('Saw %d training instances' % n)
     
     for sentence in pidgin_sentences[:n]:
@@ -285,13 +343,18 @@ def main():
         ('feature-extraction', FeatureUnion([
             ('cgrams', Pipeline([
                 ('normalize', TextNormalizationTransform()), 
-                ('vect', CountVectorizer(ngram_range=(4,4), analyzer='char')),
+                ('vect', CountVectorizer(ngram_range=(2,5), analyzer='char')),
                 ('tfidf', TfidfTransformer(use_idf=False)),
             ])),
+            ('ngrams', Pipeline([
+                ('normalize', TextNormalizationTransform()), 
+                ('vect', CountVectorizer(ngram_range=(1,3))),
+                ('tfidf', TfidfTransformer(use_idf=False)),
+            ])),            
             ('word-length', AverageWordLengthExtractor()),
             ('syntax-feats', SyntaxFeatureExtractor())
         ])),
-        ('classifier', LogisticRegression(solver='lbfgs'))])
+        ('classifier', LogisticRegression(solver='lbfgs', max_iter=10000))])
 
     feat_pipe = Pipeline([
         ('feature-extraction', FeatureUnion([
@@ -304,7 +367,32 @@ def main():
             ('syntax-feats', SyntaxFeatureExtractor())
         ])),
     ])
-    clf = LogisticRegression(solver='lbfgs')
+
+    syntax_feat_pipe = Pipeline([
+        ('feature-extraction', FeatureUnion([
+            ('syntax-feats', SyntaxFeatureExtractor())
+        ])),
+    ])
+    
+    surface_feat_pipe = Pipeline([
+        ('feature-extraction', FeatureUnion([
+            ('cgrams', Pipeline([
+                ('normalize', TextNormalizationTransform()), 
+                ('vect', CountVectorizer(ngram_range=(2,5), analyzer='char')),
+                ('tfidf', TfidfTransformer(use_idf=False)),
+            ])),
+            # ('word-length', AverageWordLengthExtractor()),
+        ])),
+    ])
+
+    dumb_feat_pipe = Pipeline([
+        ('feature-extraction', FeatureUnion([
+            ('word-length', AverageWordLengthExtractor()),
+        ])),
+    ])
+    
+    
+    clf = LogisticRegression(solver='lbfgs', max_iter=10000)
 
     #model = pipe.fit(training_data, training_targets)
 
@@ -318,14 +406,27 @@ def main():
     #                                                    test_size=0.2,
     #                                                    random_state=0)
 
-    X = feat_pipe.fit_transform(training_data)
+    X = syntax_feat_pipe.fit_transform(training_data)
+    #X = dumb_feat_pipe.fit_transform(training_data)
+    #X = feat_pipe.fit_transform(training_data)
     #X = training_data
     y = training_targets
 
     from sklearn.model_selection import cross_val_score
-    scores = cross_val_score(clf, X, y, cv=5, verbose=100)
-    print(scores)
+    scores = cross_val_score(clf, X, y, cv=5, \
+                             verbose=1, scoring='roc_auc')    
+    print(np.mean(scores), scores)
 
+    #clf = SVC()
+    #scores = cross_val_score(clf, X, y, cv=5, \
+    #                         verbose=1, scoring='roc_auc')
+    #print(np.mean(scores), scores)
+
+    #clf = SVC(kernel='linear')
+    #scores = cross_val_score(clf, X, y, cv=5, \
+    #                         verbose=1, scoring='roc_auc')
+    #print(np.mean(scores), scores)
+    
     print('Training and saving full model')
     model = clf.fit(X, y)
     
