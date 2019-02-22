@@ -78,11 +78,11 @@ if __name__ == "__main__":
 	'''
 
 	vectorizer = CountVectorizer(ngram_range=(2,5), analyzer='char')
-
-	X_train = vectorizer.fit_transform(X)
 	clf = LogisticRegression(solver='lbfgs', multi_class='ovr')
 
-	model = clf.fit(X_train, y)
+
+	pipe = Pipeline([('vectorizer', vectorizer), ('lrg', clf)])
+	pipe.fit(X, y)
 
 	with open('names_classifier.pkl', 'wb') as f:
- 		pickle.dump((vectorizer, model, labels), f)
+ 		pickle.dump((pipe, labels), f)
