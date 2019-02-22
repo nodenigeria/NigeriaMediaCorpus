@@ -45,6 +45,7 @@ if __name__ == "__main__":
 	X = []
 	y = []
 
+	labels = []
 	i = 0
 
 	for file in glob.glob('Name_recognition/*.txt'):
@@ -53,6 +54,7 @@ if __name__ == "__main__":
 		with open(file, 'r') as f:
 			names = [line.rstrip('\n') for line in f]
 
+		labels.append(tribe)
 		if tribe == 'hausa':
 			names = np.random.choice(names, 300)
 
@@ -83,4 +85,4 @@ if __name__ == "__main__":
 	model = clf.fit(X_train, y)
 
 	with open('names_classifier.pkl', 'wb') as f:
- 		pickle.dump((vectorizer, model), f)
+ 		pickle.dump((vectorizer, model, labels), f)
