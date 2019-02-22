@@ -26,7 +26,7 @@ run with 1 argument:
 
 if __name__ == "__main__":
 	article_directory = sys.argv[1]
-	websites = glob.glob(directory+'/*.tsv')
+	websites = glob.glob(article_directory+'/*.tsv')
 
 	with open('names_classifier.pkl', 'rb') as f:
 		vectorizer, model, labels = pickle.load(f)
@@ -36,8 +36,9 @@ if __name__ == "__main__":
 		with open(website, 'r') as f:
 			tsv_reader = csv.reader(f, delimiter="\t")
 			for article in tsv_reader:
-				names.append(unicodedata(article[3].split(' ')[-1:].lower()))
+				names.append(unicodeToAscii(article[3].split(' ')[-1].lower()))
 
+		print(names)
 		X = vectorizer.fit_transform(names)
 		predictions = model.predict(X)
 
