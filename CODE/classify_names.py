@@ -29,21 +29,23 @@ if __name__ == "__main__":
 	websites = glob.glob(article_directory+'/*.tsv')
 
 	with open('names_classifier.pkl', 'rb') as f:
-		vectorizer, model, labels = pickle.load(f)
+		model, labels = pickle.load(f)
 
 	for website in websites:
 		names = []
 		with open(website, 'r') as f:
 			tsv_reader = csv.reader(f, delimiter="\t")
 			for article in tsv_reader:
-				names.append(unicodeToAscii(article[3].split(' ')[-1].lower()))
+				name = article[3]
+				name = unicodeToAscii(name).lower()
+				last_name = name.split(' ')[-1]
+				if last_name != 'none' and last_name != 'reporter' and last_name != 'report' and last_name != 'group':
+					names.append(last_name)
 
-		print(names)
-		X = vectorizer.fit_transform(names)
-		predictions = model.predict(X)
+		predictions = model.predict(names)
 
-		print(os.path.splitext(os.path.basename(website))[0]+'\n')
-		print("{}: {} / {} \n".format(labels[0], len([i for i in predictions if i == 0]), len(predictions)))
-		print("{}: {} / {} \n".format(labels[1], len([i for i in predictions if i == 1]), len(predictions)))
-		print("{}: {} / {} \n".format(labels[2], len([i for i in predictions if i == 2]), len(predictions)))
+		print(os.path.splitext(os.path.basename(website))[0])
+		print("{}: {} / {}".format(labels[0], len([i for i in predictions if i == 0]), len(predictions)))
+		print("{}: {} / {}".format(labels[1], len([i for i in predictions if i == 1]), len(predictions)))
+		print("{}: {} / {}".format(labels[2], len([i for i in predictions if i == 2]), len(predictions)))
 
