@@ -32,10 +32,10 @@ if __name__ == "__main__":
 		model, labels = pickle.load(f)
 
 	uncertain_predictions = []
+	random_names = []
 
 	for website in websites:
 		names = []
-		random_names = []
 
 		print(website)
 		if os.path.splitext(os.path.basename(website))[0] != 'punch_articles':
