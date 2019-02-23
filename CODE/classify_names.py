@@ -35,6 +35,7 @@ if __name__ == "__main__":
 
 	for website in websites:
 		names = []
+		random_names = []
 
 		print(website)
 		if os.path.splitext(os.path.basename(website))[0] != 'punch_articles':
@@ -44,8 +45,8 @@ if __name__ == "__main__":
 				for article in tsv_reader:
 					name = article[3]
 					name = unicodeToAscii(name).lower()
-					name = name.replace('reporter', ' ').replace('asst. editor', ' ')
-					name_list = name.split(' and ')
+					name = name.replace('reporter', ' ').replace('asst. editor', ' ').replace(' and ', ', ').replace('amp;', ', ').replace(';', ', ')
+					name_list = name.split(',')
 					last_name = name.split(' ')[-1]
 					if last_name != 'none' and last_name != 'reporter' and last_name != 'report' and last_name != 'group':
 						names.extend([name for name in name_list])
@@ -53,6 +54,11 @@ if __name__ == "__main__":
 				names = list(set(list(names)))
 				predictions = model.predict_proba(names)
 				class_predictions = model.predict(names)
+				
+				random_sample = np.random.choice(len(names), 250)
+				random_names.extend(zip(np.array(names)[random_sample], np.array(class_predictions)[random_sample]))
+
+				'''
 				predictions.sort(axis=1)			
 						
 				ratios = []
@@ -65,6 +71,7 @@ if __name__ == "__main__":
 				for i in range(0, 100):
 					uncertain_predictions.append((names[ratios[i][0]], labels[class_predictions[ratios[i][0]]]))
 
+				'''
 
 
 						
@@ -75,7 +82,10 @@ if __name__ == "__main__":
 				print("{}: {} / {} \n".format(labels[2], len([i for i in predictions if i == 2]), len(predictions)))
 				'''
 
-	with open('uncertain_predictions.csv', 'w') as f:
+	with open('random_names.csv', 'w') as f:	
+		random_names_with_class = []
+		for name in random_names:
+			random_names_with_class.append((name[0], labels[name[1]]))
 		writer = csv.writer(f, delimiter=',')
-		for prediction in uncertain_predictions:
+		for prediction in random_names_with_class:
 			writer.writerow(prediction)
