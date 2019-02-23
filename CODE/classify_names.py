@@ -44,9 +44,11 @@ if __name__ == "__main__":
 				for article in tsv_reader:
 					name = article[3]
 					name = unicodeToAscii(name).lower()
+					name = name.replace('reporter', ' ').replace('asst. editor', ' ')
+					name_list = name.split(' and ')
 					last_name = name.split(' ')[-1]
 					if last_name != 'none' and last_name != 'reporter' and last_name != 'report' and last_name != 'group':
-						names.append(name)
+						names.extend([name for name in name_list])
 
 				names = list(set(list(names)))
 				predictions = model.predict_proba(names)
