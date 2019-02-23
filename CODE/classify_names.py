@@ -47,29 +47,29 @@ if __name__ == "__main__":
 					if last_name != 'none' and last_name != 'reporter' and last_name != 'report' and last_name != 'group':
 						names.append(last_name)
 
-			predictions = model.predict_proba(names)
-			predictions_sorted = np.array(predictions).sort(axis=1)
-			
-			
-			ratios = []
-			
-			for prediction in predictions_sorted:
-				ratios.append(prediction[2]/prediction[1])
-			
-			ratios = sorted(enumerate(ratios), key=lambda x: x[1])
-			
-			for i in range(0, 100):
-				uncertain_predictions.append(names[ratios[i][0]])
+						predictions = model.predict_proba(names)
+						predictions_sorted = np.array(predictions).sort(axis=1)
+						
+						
+						ratios = []
+						
+						for prediction in predictions_sorted:
+							ratios.append(prediction[2]/prediction[1])
+						
+						ratios = sorted(enumerate(ratios), key=lambda x: x[1])
+						
+						for i in range(0, 100):
+							uncertain_predictions.append(names[ratios[i][0]])
 
 
 
-			
-			'''
-			print(os.path.splitext(os.path.basename(website))[0]+'\n')
-			print("{}: {} / {} \n".format(labels[0], len([i for i in predictions if i == 0]), len(predictions)))
-			print("{}: {} / {} \n".format(labels[1], len([i for i in predictions if i == 1]), len(predictions)))
-			print("{}: {} / {} \n".format(labels[2], len([i for i in predictions if i == 2]), len(predictions)))
-			'''
+						
+						'''
+						print(os.path.splitext(os.path.basename(website))[0]+'\n')
+						print("{}: {} / {} \n".format(labels[0], len([i for i in predictions if i == 0]), len(predictions)))
+						print("{}: {} / {} \n".format(labels[1], len([i for i in predictions if i == 1]), len(predictions)))
+						print("{}: {} / {} \n".format(labels[2], len([i for i in predictions if i == 2]), len(predictions)))
+						'''
 
 	with open('uncertain_predictions.txt', 'w') as f:
 		for prediction in uncertain_predictions:
