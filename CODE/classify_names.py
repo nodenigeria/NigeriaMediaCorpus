@@ -31,21 +31,46 @@ if __name__ == "__main__":
 	with open('names_classifier.pkl', 'rb') as f:
 		model, labels = pickle.load(f)
 
+	uncertain_predictions = []
+
 	for website in websites:
 		names = []
-		with open(website, 'r') as f:
-			tsv_reader = csv.reader(f, delimiter="\t")
-			for article in tsv_reader:
-				name = article[3]
-				name = unicodeToAscii(name).lower()
-				last_name = name.split(' ')[-1]
-				if last_name != 'none' and last_name != 'reporter' and last_name != 'report' and last_name != 'group':
-					names.append(last_name)
 
-		predictions = model.predict(names)
+		if os.path.splitext(os.path.basename(website)) != 'thepunch':
 
-		print(os.path.splitext(os.path.basename(website))[0])
-		print("{}: {} / {}".format(labels[0], len([i for i in predictions if i == 0]), len(predictions)))
-		print("{}: {} / {}".format(labels[1], len([i for i in predictions if i == 1]), len(predictions)))
-		print("{}: {} / {}".format(labels[2], len([i for i in predictions if i == 2]), len(predictions)))
+			with open(website, 'r') as f:
+				tsv_reader = csv.reader(f, delimiter="\t")
+				for article in tsv_reader:
+					name = article[3]
+					name = unicodeToAscii(name).lower()
+					last_name = name.split(' ')[-1]
+					if last_name != 'none' and last_name != 'reporter' and last_name != 'report' and last_name != 'group':
+						names.append(last_name)
 
+			predictions = model.predict_proba(names)
+			predictions_sorted = np.array(predictions).sort(axis=1)
+			
+			
+			ratios = []
+			
+			for prediction in predictions_sorted:
+				ratios.append(prediction[2]/prediction[1])
+			
+			ratios = sorted(enumerate(ratios), key=lambda x: x[1])
+			
+			for i in range(0, 100):
+				uncertain_predictions.append(names[ratios[i][0]])
+
+
+
+			
+			'''
+			print(os.path.splitext(os.path.basename(website))[0]+'\n')
+			print("{}: {} / {} \n".format(labels[0], len([i for i in predictions if i == 0]), len(predictions)))
+			print("{}: {} / {} \n".format(labels[1], len([i for i in predictions if i == 1]), len(predictions)))
+			print("{}: {} / {} \n".format(labels[2], len([i for i in predictions if i == 2]), len(predictions)))
+			'''
+
+	with open('uncertain_predictions.txt', 'w') as f:
+		for prediction in uncertain_predictions:
+			f.write(prediction)
