@@ -46,7 +46,7 @@ if __name__ == "__main__":
 					name = unicodeToAscii(name).lower()
 					last_name = name.split(' ')[-1]
 					if last_name != 'none' and last_name != 'reporter' and last_name != 'report' and last_name != 'group':
-						names.append(last_name)
+						names.append(name)
 
 				names = list(set(list(names)))
 				predictions = model.predict_proba(names)
