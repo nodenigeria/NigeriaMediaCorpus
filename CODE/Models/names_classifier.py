@@ -55,8 +55,8 @@ if __name__ == "__main__":
 			names = [line.rstrip('\n') for line in f]
 
 		labels.append(tribe)
-		if tribe == 'hausa':
-			names = np.random.choice(names, 300)
+		if tribe == 'yoruba':
+			names = np.random.choice(names, 500)
 
 		for name in names:
 			X.append(unicodeToAscii(name.lower()))
