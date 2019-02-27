@@ -28,6 +28,8 @@ if __name__ == "__main__":
 	article_directory = sys.argv[1]
 	websites = glob.glob(article_directory+'/*.tsv')
 
+	stop_words = ['assistant', 'editor', 'asst.', 'editor', 'reporter', 'reports', 'by', 'from', 'abuja', 'lagos', 'benin city', 'our', 'dr', 'correspondent', 'rev.', 'mr.', 'author', ';']
+
 	with open('names_classifier.pkl', 'rb') as f:
 		model, labels = pickle.load(f)
 
@@ -45,11 +47,10 @@ if __name__ == "__main__":
 				for article in tsv_reader:
 					name = article[3]
 					name = unicodeToAscii(name).lower()
-					name = name.replace('reporter', ' ').replace('asst. editor', ' ').replace(' and ', ', ').replace('amp;', ', ').replace(';', ', ')
-					name_list = name.split(',')
-					last_name = name.split(' ')[-1]
-					if last_name != 'none' and last_name != 'reporter' and last_name != 'report' and last_name != 'group':
-						names.extend([name for name in name_list])
+					for word in stop_words:
+						name = name.replace(word, ' ')
+					name_list = name.split('and')
+					names.extend([name.strip() for name in name_list])
 
 				names = list(set(list(names)))
 				predictions = model.predict_proba(names)
