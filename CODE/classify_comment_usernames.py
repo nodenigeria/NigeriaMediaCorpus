@@ -71,6 +71,6 @@ if __name__ == "__main__":
 		for prediction in random_names_with_class:
 			writer.writerow(prediction)
 
-	with open('held_out_set.txt') as f:
+	with open('held_out_set.txt', 'w') as f:
 		for name in names_heldout:
 			f.write(name+'\n')
