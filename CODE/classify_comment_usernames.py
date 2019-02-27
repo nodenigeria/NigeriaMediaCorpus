@@ -72,5 +72,6 @@ if __name__ == "__main__":
 			writer.writerow(prediction)
 
 	with open('held_out_set.txt', 'w') as f:
-		for name in names_heldout:
+		random_heldout = np.random.choice(names_heldout, 200)
+		for name in random_heldout:
 			f.write(name+'\n')
