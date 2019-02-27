@@ -10,6 +10,7 @@ import pandas as pd
 import csv
 import unicodedata
 import string
+import json
 
 all_letters = string.ascii_letters + " .,;'"
 def unicodeToAscii(s):
@@ -39,11 +40,10 @@ if __name__ == "__main__":
 		with open(website, 'r') as f:
 			comments = json.load(f)
 
-			for article in comments:
-
-				if article:
-					for post in article
-						name = post["author"]["value"]
+			for article,comment_data in comments.items():
+				if comment_data:
+					for post, post_data in comment_data.items():
+						name = post_data["author"]["value"]
 						name = unicodeToAscii(name).lower()
 						names.append(name)
 
