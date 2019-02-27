@@ -3,6 +3,8 @@ import os
 import glob
 import sys
 
+from sklearn.model_selection import train_test_split
+
 import re
 import numpy as np
 import pandas as pd
@@ -33,6 +35,7 @@ if __name__ == "__main__":
 		model, labels = pickle.load(f)
 
 	random_names = []
+	names_heldout = []
 
 	for website in websites:
 		names = []
@@ -48,11 +51,16 @@ if __name__ == "__main__":
 						names.append(name)
 
 			names = list(set(list(names)))
+
+			names, held_out_sample = train_test_split(names, test_size=0.1, random_state=0)
+
 			predictions = model.predict_proba(names)
 			class_predictions = model.predict(names)
 			
 			random_sample = np.random.choice(len(names), 250)
 			random_names.extend(zip(np.array(names)[random_sample], np.array(class_predictions)[random_sample]))
+
+			names_heldout.extend(held_out_sample)
 
 
 	with open('random_usernames.csv', 'w') as f:	
@@ -62,3 +70,7 @@ if __name__ == "__main__":
 		writer = csv.writer(f, delimiter=',')
 		for prediction in random_names_with_class:
 			writer.writerow(prediction)
+
+	with open('held_out_set.txt') as f:
+		for name in names_heldout:
+			f.write(name+'\n')
