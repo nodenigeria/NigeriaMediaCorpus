@@ -37,9 +37,10 @@ if __name__ == "__main__":
 	random_names = []
 	names_heldout = []
 
-	for website in websites:
-		names = []
+	names = []
 
+	for website in websites:
+		current_names = []
 		with open(website, 'r') as f:
 			comments = json.load(f)
 
@@ -48,21 +49,24 @@ if __name__ == "__main__":
 					for post, post_data in comment_data.items():
 						name = post_data["author"]["value"]
 						name = unicodeToAscii(name).lower()
-						names.append(name)
+						current_names.append(name)
 
-			names = list(set(list(names)))
+			current_names = list(set(list(names)))
 
-			names, held_out_sample = train_test_split(names, test_size=0.1, random_state=0)
+			current_names, held_out_sample = train_test_split(names, test_size=0.1, random_state=0)
 
-			predictions = model.predict_proba(names)
-			class_predictions = model.predict(names)
+			predictions = model.predict_proba(current_names)
+			class_predictions = model.predict(current_names)
 			
-			random_sample = np.random.choice(len(names), 250)
-			random_names.extend(zip(np.array(names)[random_sample], np.array(class_predictions)[random_sample]))
+			random_sample = np.random.choice(len(current_names), 250)
+			random_names.extend(zip(np.array(current_names)[random_sample], np.array(class_predictions)[random_sample]))
 
 			names_heldout.extend(held_out_sample)
 
+			names.extend(zip(np.array(current_names), np.array(class_predictions)))
 
+
+	'''
 	with open('random_usernames.csv', 'w') as f:	
 		random_names_with_class = []
 		for name in random_names:
@@ -75,3 +79,13 @@ if __name__ == "__main__":
 		random_heldout = np.random.choice(names_heldout, 200)
 		for name in random_heldout:
 			f.write(name+'\n')
+	'''
+
+	with open('username_classifications.csv', 'w') as f:
+		usernames_with_class = []
+		for username in names:
+			names_with_class.append((name[0], labels[name[1]]))
+		writer = csv.writer(f, delimiter=',')
+		for prediction in usernames_with_class:
+			writer.writerow(prediction)
+

@@ -33,11 +33,12 @@ if __name__ == "__main__":
 	with open('names_classifier.pkl', 'rb') as f:
 		model, labels = pickle.load(f)
 
+	names = []
 	uncertain_predictions = []
 	random_names = []
 
 	for website in websites:
-		names = []
+		current_names = []
 
 		print(website)
 		if os.path.splitext(os.path.basename(website))[0] != 'punch_articles':
@@ -50,14 +51,14 @@ if __name__ == "__main__":
 					for word in stop_words:
 						name = name.replace(word, ' ')
 					name_list = name.split('and')
-					names.extend([name.strip() for name in name_list])
+					current_names.extend([name.strip() for name in name_list])
 
-				names = list(set(list(names)))
-				predictions = model.predict_proba(names)
-				class_predictions = model.predict(names)
+				current_names = list(set(list(current_names)))
+				predictions = model.predict_proba(current_names)
+				class_predictions = model.predict(current_names)
 				
-				random_sample = np.random.choice(len(names), 250)
-				random_names.extend(zip(np.array(names)[random_sample], np.array(class_predictions)[random_sample]))
+				random_sample = np.random.choice(len(current_names), 250)
+				random_names.extend(zip(np.array(current_names)[random_sample], np.array(class_predictions)[random_sample]))
 
 				'''
 				predictions.sort(axis=1)			
@@ -82,11 +83,22 @@ if __name__ == "__main__":
 				print("{}: {} / {} \n".format(labels[1], len([i for i in predictions if i == 1]), len(predictions)))
 				print("{}: {} / {} \n".format(labels[2], len([i for i in predictions if i == 2]), len(predictions)))
 				'''
+			names.extend(zip(np.array(current_names), np.array(class_predictions)))
 
+	'''
 	with open('random_names.csv', 'w') as f:	
 		random_names_with_class = []
 		for name in random_names:
 			random_names_with_class.append((name[0], labels[name[1]]))
 		writer = csv.writer(f, delimiter=',')
 		for prediction in random_names_with_class:
+			writer.writerow(prediction)
+	'''
+
+	with open('author_classifications.csv', 'w') as f:
+		names_with_class = []
+		for name in names:
+			names_with_class.append((name[0], labels[name[1]]))
+		writer = csv.writer(f, delimiter=',')
+		for prediction in names_with_class:
 			writer.writerow(prediction)
