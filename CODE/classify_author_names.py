@@ -56,6 +56,11 @@ if __name__ == "__main__":
 				current_names = list(set(list(current_names)))
 				predictions = model.predict_proba(current_names)
 				class_predictions = model.predict(current_names)
+
+
+				current_names, held_out_sample = train_test_split(names, test_size=0.1, random_state=0)
+
+				names_heldout.extend(held_out_sample)
 				
 				random_sample = np.random.choice(len(current_names), 250)
 				random_names.extend(zip(np.array(current_names)[random_sample], np.array(class_predictions)[random_sample]))
@@ -95,6 +100,11 @@ if __name__ == "__main__":
 			writer.writerow(prediction)
 	'''
 
+	with open('held_out_set.txt', 'w') as f:
+		random_heldout = np.random.choice(names_heldout, 200)
+		for name in random_heldout:
+			f.write(name+'\n')
+			
 	with open('author_classifications.csv', 'w') as f:
 		names_with_class = []
 		for name in names:
